@@ -5,14 +5,26 @@
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
 // motor groups
-pros::MotorGroup leftMotors({-13, 1, -11},
-                            pros::MotorGearset::blue); // left motor group - ports 3 (reversed), 4, 5 (reversed)
-pros::MotorGroup rightMotors({18, -20, 19}, pros::MotorGearset::blue); // right motor group - ports 6, 7, 9 (reversed)
 
-// Inertial Sensor on port 10
+pros::MotorGroup leftMotors({13, -12, -11},pros::MotorGearset::blue); // left motor group - ports 3 (reversed), 4, 5 (reversed)
+pros::MotorGroup rightMotors({-17, 19, 20}, pros::MotorGearset::blue); // right motor group - ports 6, 7, 9 (reversed)
+// leftMotors.set_gearing(pros::MotorGears::green, 2);
+// rightMotors.set_gearing(pros::MotorGears::green, 2);
+// pros::Motor leftFront(-11, pros::MotorGearset::green);
+// pros::Motor rightFront(-20, pros::MotorGearset::green);
+
+// Inertial Sensoron port 10
 pros::Imu imu(12);
 
 pros::Distance dist(8);
+
+pros::Motor leftCascade(10, pros::MotorGearset::blue);
+pros::Motor rightCascade(18, pros::MotorGearset::blue);
+
+pros::Motor intake(15, pros::MotorGearset::blue);
+
+//pneumatics
+pros::adi::DigitalOut claw('H', false);
 
 // tracking wheels
 // vertical tracking wheel encoder. Rotation sensor, port 11, reversed
@@ -174,6 +186,8 @@ float cubicDrive(float input, float scaling = 1.0f) {
     return scaling * (input * input * input) / (maxInput * maxInput);
 }
 
+bool clawthing = false;
+
 void opcontrol() {
     // controller
     // loop to continuously update motors
@@ -191,5 +205,36 @@ void opcontrol() {
 
         leftMotors.move(leftPower);
         rightMotors.move(rightPower);
+
+        if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
+            leftCascade.move_velocity(600);
+            rightCascade.move_velocity(600);
+        }
+
+        else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)){
+            intake.move_velocity(-600);
+        }
+
+        else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)){
+            intake.move_velocity(600);
+        }
+
+
+        else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)){
+            leftCascade.move_velocity(-600);
+            rightCascade.move_velocity(-600);
+        }
+
+        else if(controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)){
+            clawthing = !clawthing;
+            claw.set_value(clawthing);
+        }
+
+        else {
+            leftCascade.move_velocity(0);
+            rightCascade.move_velocity(0);
+            intake.move_velocity(0);
+        }
+
     }
 }
