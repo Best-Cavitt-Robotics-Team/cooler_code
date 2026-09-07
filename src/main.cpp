@@ -1,5 +1,6 @@
 #include "main.h"
 #include "lemlib/api.hpp" // IWYU pragma: keep
+#include "pros/abstract_motor.hpp"
 
 // controller
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
@@ -10,11 +11,11 @@ pros::MotorGroup leftMotors({13, -12, -11},pros::MotorGearset::blue); // left mo
 pros::MotorGroup rightMotors({-17, 19, 20}, pros::MotorGearset::blue); // right motor group - ports 6, 7, 9 (reversed)
 // leftMotors.set_gearing(pros::MotorGears::green, 2);
 // rightMotors.set_gearing(pros::MotorGears::green, 2);
-// pros::Motor leftFront(-11, pros::MotorGearset::green);
+pros::Motor leftFront(-11, pros::MotorGearset::green);
 // pros::Motor rightFront(-20, pros::MotorGearset::green);
 
 // Inertial Sensoron port 10
-pros::Imu imu(12);
+pros::Imu imu(5);
 
 pros::Distance dist(8);
 
@@ -24,7 +25,8 @@ pros::Motor rightCascade(18, pros::MotorGearset::blue);
 pros::Motor intake(15, pros::MotorGearset::blue);
 
 //pneumatics
-pros::adi::DigitalOut claw('H', false);
+pros::adi::DigitalOut claw('H', true);
+pros::adi::DigitalOut swivle('G', false);
 
 // tracking wheels
 // vertical tracking wheel encoder. Rotation sensor, port 11, reversed
@@ -33,7 +35,7 @@ pros::Rotation verticalEnc(-9);
 lemlib::TrackingWheel vertical(&verticalEnc, lemlib::Omniwheel::NEW_2, 0.35);
 
 // drivetrain settings
-lemlib::Drivetrain drivetrain(&leftMotors, // left motor group
+lemlib::Drivetrain drivetrain(&leftMotors,// left motor group
                               &rightMotors, // right motor group
                               15, // 10 inch track width
                               lemlib::Omniwheel::NEW_325, // using new 4" omnis
@@ -42,7 +44,7 @@ lemlib::Drivetrain drivetrain(&leftMotors, // left motor group
 );
 
 // lateral motion controller
-lemlib::ControllerSettings linearController(7, // proportional gain (kP)
+lemlib::ControllerSettings linearController(3, // proportional gain (kP)
                                             0, // integral gain (kI)
                                             10, // derivative gain (kD)
                                             3, // anti windup
@@ -66,7 +68,7 @@ lemlib::ControllerSettings angularController(1.7, // proportional gain (kP)
 );
 
 // sensors for odometry
-lemlib::OdomSensors sensors(&vertical, // vertical tracking wheel
+lemlib::OdomSensors sensors(nullptr,//&vertical, // vertical tracking wheel
                             nullptr, // vertical tracking wheel 2, set to nullptr as we don't have a second one
                             nullptr, // horizontal tracking wheel
                             nullptr,
@@ -96,8 +98,11 @@ lemlib::Chassis chassis(drivetrain, linearController, angularController, sensors
  * to keep execution time for this mode under a few seconds.
  */
 void initialize() {
+    leftMotors.set_gearing(pros::MotorGears::green, 2);  // index 0 = front motor
+    rightMotors.set_gearing(pros::MotorGears::green, 2);
     pros::lcd::initialize(); // initialize brain screen
     chassis.calibrate(); // calibrate sensors
+    claw.set_value(true);
     // the default rate is 50. however, if you need to change the rate, you
     // can do the following.
     // lemlib::bufferedStdout().setRate(...);
@@ -150,36 +155,72 @@ void resetX(){
 //.earlyExitRange
 
 void autonomous() {
-    chassis.setPose(9,29,35);
-    chassis.moveToPose(20,44,35,1000);
-    pros::delay(1000);
-    chassis.moveToPose(12,24,0,1000,{.forwards = false, .lead = 0.6});
-    pros::delay(100);
-    chassis.turnToHeading(180,1000);
-    pros::delay(100);
-    chassis.moveToPose(11,4,180,1000);
-    pros::delay(1000);
-    chassis.moveToPose(11,65,180,1000,{.forwards=false});
-    chassis.moveToPose(20,52,135,1000);
-    pros::delay(1000);
-    chassis.moveToPose(11,65,180,1000,{.forwards=false,.lead=0.6});
-    chassis.moveToPose(11,4,180,1000);
+    // chassis.setPose(0,0,0);
+    // chassis.moveToPoint(0,24,1000);
+
+    leftCascade.set_brake_mode(pros::MotorBrake::hold);
+    rightCascade.set_brake_mode(pros::MotorBrake::hold);
+    chassis.setPose(60,11,-225);
+    chassis.moveToPose(41, 30, -225, 1000, {.forwards=false});
+    leftCascade.move_velocity(-600);
+    rightCascade.move_velocity(600);
     pros::delay(500);
-    chassis.moveToPose(11,24,180,1000, {.forwards = false, .earlyExitRange = 2});
-    pros::delay(100);
-    chassis.turnToHeading(90, 250);
-    pros::delay(100);
-    chassis.moveToPose(44,24,90,1000);
-    pros::delay(1000);
-    chassis.moveToPose(11,24,90,1000, {.forwards = false, .earlyExitRange = 2});
-    pros::delay(100);
-    chassis.turnToHeading(180, 250);
-    chassis.moveToPose(11,4,180,1000);
+    leftCascade.move_velocity(0);
+    rightCascade.move_velocity(0);
+    pros::delay(2000);
+    claw.set_value(true);
+    // claw.set_value(false);
+    // pros::delay(500);
+    // leftCascade.move_velocity(600);
+    // rightCascade.move_velocity(-600);
+    // chassis.moveToPose(-12,0,-180,1000);
+    // claw.set_value(true);
+    // leftCascade.move_velocity(-600);
+    // rightCascade.move_velocity(600);
+    // chassis.moveToPose(-12, 23, 0, 1000, {}, false);
+    // claw.set_value(false);
+    // chassis.moveToPose(36, 13.5, 180, 3000);
+    // leftCascade.move_velocity(600);
+    // rightCascade.move_velocity(-600);
+    // pros::delay(1000);
+    // claw.set_value(true);
+    // chassis.moveToPose(36, 24, 0, 1000, {}, false);
+    // leftCascade.move_velocity(-600);
+    // rightCascade.move_velocity(600);
+    // claw.set_value(true);
+
+    // chassis.setPose(9,29,35);
+    // chassis.moveToPose(20,44,35,1000);
+    // pros::delay(1000);
+    // chassis.moveToPose(12,24,0,1000,{.forwards = false, .lead = 0.6});
+    // pros::delay(100);
+    // chassis.turnToHeading(180,1000);
+    // pros::delay(100);
+    // chassis.moveToPose(11,4,180,1000);
+    // pros::delay(1000);
+    // chassis.moveToPose(11,65,180,1000,{.forwards=false});
+    // chassis.moveToPose(20,52,135,1000);
+    // pros::delay(1000);
+    // chassis.moveToPose(11,65,180,1000,{.forwards=false,.lead=0.6});
+    // chassis.moveToPose(11,4,180,1000);
+    // pros::delay(500);
+    // chassis.moveToPose(11,24,180,1000, {.forwards = false, .earlyExitRange = 2});
+    // pros::delay(100);
+    // chassis.turnToHeading(90, 250);
+    // pros::delay(100);
+    // chassis.moveToPose(44,24,90,1000);
+    // pros::delay(1000);
+    // chassis.moveToPose(11,24,90,1000, {.forwards = false, .earlyExitRange = 2});
+    // pros::delay(100);
+    // chassis.turnToHeading(180, 250);
+    // chassis.moveToPose(11,4,180,1000);
 }
 
 /**
  * Runs in driver control
  */
+
+
 
 float cubicDrive(float input, float scaling = 1.0f) {
     const float maxInput = 127.0f;
@@ -187,11 +228,13 @@ float cubicDrive(float input, float scaling = 1.0f) {
 }
 
 bool clawthing = false;
+bool swivly = true;
 
 void opcontrol() {
     // controller
     // loop to continuously update motors
     while (true) {
+
         float throttle = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
         float turn     = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
 
@@ -206,8 +249,35 @@ void opcontrol() {
         leftMotors.move(leftPower);
         rightMotors.move(rightPower);
 
+        int macroNumber = 0;
+
+        if (macroNumber == 0){
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)){
+                leftCascade.move_relative(5*-360, 100);
+                rightCascade.move_relative(4*360, 100);
+                macroNumber = macroNumber + 1;
+            }
+        }
+
+        else if (macroNumber != 0){
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)){
+                leftCascade.move_relative(4*-360, 100);
+                rightCascade.move_relative(4*360, 100);
+                macroNumber = macroNumber + 1;
+            }
+            else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)){
+                leftCascade.move_relative(4*360, 100);
+                rightCascade.move_relative(4*-360, 100);
+                macroNumber = macroNumber + 1;
+            }
+        }
+
+
+
+        //macro thingy, code first up, and button reset.
+
         if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
-            leftCascade.move_velocity(600);
+            leftCascade.move_velocity(-600);
             rightCascade.move_velocity(600);
         }
 
@@ -221,13 +291,18 @@ void opcontrol() {
 
 
         else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)){
-            leftCascade.move_velocity(-600);
+            leftCascade.move_velocity(600);
             rightCascade.move_velocity(-600);
         }
 
         else if(controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)){
             clawthing = !clawthing;
             claw.set_value(clawthing);
+        }
+
+        else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT)){
+            swivly = !swivly;
+            swivle.set_value(swivly);
         }
 
         else {
