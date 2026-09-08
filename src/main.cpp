@@ -97,6 +97,28 @@ lemlib::Chassis chassis(drivetrain, linearController, angularController, sensors
  * All other competition modes are blocked by initialize; it is recommended
  * to keep execution time for this mode under a few seconds.
  */
+
+int autonSelection = 0;
+const int NUM_AUTONS = 2;
+
+void selectorTask(void*) {
+    pros::lcd::initialize();
+    pros::lcd::set_text(0, "Color Left (Right Side)");
+
+    pros::lcd::register_btn0_cb([]() {
+        autonSelection = (autonSelection - 1) % NUM_AUTONS;
+        if (autonSelection == 0) pros::lcd::set_text(0, "Color Left (Right Side)");
+        else if (autonSelection == 1) pros::lcd::set_text(0, "Color Right (Left Side)");
+    });
+    pros::lcd::register_btn2_cb([]() {
+        autonSelection = (autonSelection + 1 + NUM_AUTONS) % NUM_AUTONS;
+        if (autonSelection == 0) pros::lcd::set_text(0, "Color Left (Right Side)");
+        else if (autonSelection == 1) pros::lcd::set_text(0, "Color Right (Left Side)");
+    });
+
+    while (true) pros::delay(100);
+}
+
 void initialize() {
     leftMotors.set_gearing(pros::MotorGears::green, 2);  // index 0 = front motor
     rightMotors.set_gearing(pros::MotorGears::green, 2);
@@ -154,10 +176,7 @@ void resetX(){
 //.minSpeed
 //.earlyExitRange
 
-void autonomous() {
-    // chassis.setPose(0,0,0);
-    // chassis.moveToPoint(0,24,1000);
-
+void colorLeft(){
     leftCascade.set_brake_mode(pros::MotorBrake::hold);
     rightCascade.set_brake_mode(pros::MotorBrake::hold);
     chassis.setPose(60,11,-225);
@@ -188,32 +207,79 @@ void autonomous() {
     // leftCascade.move_velocity(-600);
     // rightCascade.move_velocity(600);
     // claw.set_value(true);
+}
 
-    // chassis.setPose(9,29,35);
-    // chassis.moveToPose(20,44,35,1000);
-    // pros::delay(1000);
-    // chassis.moveToPose(12,24,0,1000,{.forwards = false, .lead = 0.6});
-    // pros::delay(100);
-    // chassis.turnToHeading(180,1000);
-    // pros::delay(100);
-    // chassis.moveToPose(11,4,180,1000);
-    // pros::delay(1000);
-    // chassis.moveToPose(11,65,180,1000,{.forwards=false});
-    // chassis.moveToPose(20,52,135,1000);
-    // pros::delay(1000);
-    // chassis.moveToPose(11,65,180,1000,{.forwards=false,.lead=0.6});
-    // chassis.moveToPose(11,4,180,1000);
+void colorRight(){
+    //opposite theta
+    leftCascade.set_brake_mode(pros::MotorBrake::hold);
+    rightCascade.set_brake_mode(pros::MotorBrake::hold);
+    chassis.setPose(60,11,-225);
+    chassis.moveToPose(41, 30, -225, 1000, {.forwards=false});
+    leftCascade.move_velocity(-600);
+    rightCascade.move_velocity(600);
+    pros::delay(500);
+    leftCascade.move_velocity(0);
+    rightCascade.move_velocity(0);
+    pros::delay(2000);
+    claw.set_value(true);
+    // claw.set_value(false);
     // pros::delay(500);
-    // chassis.moveToPose(11,24,180,1000, {.forwards = false, .earlyExitRange = 2});
-    // pros::delay(100);
-    // chassis.turnToHeading(90, 250);
-    // pros::delay(100);
-    // chassis.moveToPose(44,24,90,1000);
+    // leftCascade.move_velocity(600);
+    // rightCascade.move_velocity(-600);
+    // chassis.moveToPose(-12,0,-180,1000);
+    // claw.set_value(true);
+    // leftCascade.move_velocity(-600);
+    // rightCascade.move_velocity(600);
+    // chassis.moveToPose(-12, 23, 0, 1000, {}, false);
+    // claw.set_value(false);
+    // chassis.moveToPose(36, 13.5, 180, 3000);
+    // leftCascade.move_velocity(600);
+    // rightCascade.move_velocity(-600);
     // pros::delay(1000);
-    // chassis.moveToPose(11,24,90,1000, {.forwards = false, .earlyExitRange = 2});
-    // pros::delay(100);
-    // chassis.turnToHeading(180, 250);
-    // chassis.moveToPose(11,4,180,1000);
+    // claw.set_value(true);
+    // chassis.moveToPose(36, 24, 0, 1000, {}, false);
+    // leftCascade.move_velocity(-600);
+    // rightCascade.move_velocity(600);
+    // claw.set_value(true);
+}
+
+void easyAuto(){
+    chassis.setPose(0,6.75,0);
+    chassis.moveToPoint(0,24,1000);
+    chassis.turnToHeading(-90,500);
+    leftCascade.move_velocity(-600);
+    rightCascade.move_velocity(600);
+    pros::delay(500);
+    leftCascade.move_velocity(0);
+    rightCascade.move_velocity(0);
+    chassis.moveToPoint(-22,24,1000);
+    leftCascade.move_velocity(600);
+    rightCascade.move_velocity(-600);
+    pros::delay(500);
+    leftCascade.move_velocity(0);
+    rightCascade.move_velocity(0);
+    claw.set_value(true);
+    chassis.moveToPoint(0,24,1000, {.forwards = false});
+    chassis.turnToHeading(-45,500);
+    chassis.moveToPoint(23,47,1000);
+    claw.set_value(false);
+    chassis.turnToHeading(22.5,500);
+    leftCascade.move_velocity(-600);
+    rightCascade.move_velocity(600);
+    pros::delay(750);
+    leftCascade.move_velocity(0);
+    rightCascade.move_velocity(0);
+    chassis.moveToPoint(24,24,1000);
+    claw.set_value(true);
+}
+
+void autonomous() {
+    if (autonSelection == 0) colorLeft();
+    else if (autonSelection == 1) colorRight();
+
+    //pid tuning
+    // chassis.setPose(0,0,0);
+    // chassis.moveToPoint(0,24,1000);
 }
 
 /**
