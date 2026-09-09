@@ -124,7 +124,7 @@ void initialize() {
     rightMotors.set_gearing(pros::MotorGears::green, 2);
     pros::lcd::initialize(); // initialize brain screen
     chassis.calibrate(); // calibrate sensors
-    claw.set_value(true);
+    claw.set_value(false);
     // the default rate is 50. however, if you need to change the rate, you
     // can do the following.
     // lemlib::bufferedStdout().setRate(...);
@@ -187,6 +187,11 @@ void colorLeft(){
     leftCascade.move_velocity(0);
     rightCascade.move_velocity(0);
     pros::delay(2000);
+    leftCascade.move_velocity(600);
+    rightCascade.move_velocity(-600);
+    pros::delay(500);
+    leftCascade.move_velocity(0);
+    rightCascade.move_velocity(0);
     claw.set_value(true);
     // claw.set_value(false);
     // pros::delay(500);
@@ -244,33 +249,33 @@ void colorRight(){
 }
 
 void easyAuto(){
-    chassis.setPose(0,6.75,0);
-    chassis.moveToPoint(0,24,1000);
+    chassis.setPose(0,6.75,180);
+    chassis.moveToPoint(0,24,1000, {.forwards=false});
     chassis.turnToHeading(-90,500);
-    leftCascade.move_velocity(-600);
-    rightCascade.move_velocity(600);
-    pros::delay(500);
-    leftCascade.move_velocity(0);
-    rightCascade.move_velocity(0);
-    chassis.moveToPoint(-22,24,1000);
-    leftCascade.move_velocity(600);
-    rightCascade.move_velocity(-600);
-    pros::delay(500);
-    leftCascade.move_velocity(0);
-    rightCascade.move_velocity(0);
-    claw.set_value(true);
-    chassis.moveToPoint(0,24,1000, {.forwards = false});
-    chassis.turnToHeading(-45,500);
-    chassis.moveToPoint(23,47,1000);
-    claw.set_value(false);
-    chassis.turnToHeading(22.5,500);
-    leftCascade.move_velocity(-600);
-    rightCascade.move_velocity(600);
-    pros::delay(750);
-    leftCascade.move_velocity(0);
-    rightCascade.move_velocity(0);
-    chassis.moveToPoint(24,24,1000);
-    claw.set_value(true);
+    // leftCascade.move_velocity(-600);
+    // rightCascade.move_velocity(600);
+    // pros::delay(500);
+    // leftCascade.move_velocity(0);
+    // rightCascade.move_velocity(0);
+    // chassis.moveToPoint(-22,24,1000);
+    // leftCascade.move_velocity(600);
+    // rightCascade.move_velocity(-600);
+    // pros::delay(500);
+    // leftCascade.move_velocity(0);
+    // rightCascade.move_velocity(0);
+    // claw.set_value(true);
+    // chassis.moveToPoint(0,24,1000, {.forwards = false});
+    // chassis.turnToHeading(-45,500);
+    // chassis.moveToPoint(23,47,1000);
+    // claw.set_value(false);
+    // chassis.turnToHeading(22.5,500);
+    // leftCascade.move_velocity(-600);
+    // rightCascade.move_velocity(600);
+    // pros::delay(750);
+    // leftCascade.move_velocity(0);
+    // rightCascade.move_velocity(0);
+    // chassis.moveToPoint(24,24,1000);
+    // claw.set_value(true);
 }
 
 void autonomous() {
@@ -315,30 +320,34 @@ void opcontrol() {
         leftMotors.move(leftPower);
         rightMotors.move(rightPower);
 
-        int macroNumber = 0;
+        // int macroNumber = 0;
 
-        if (macroNumber == 0){
-            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)){
-                leftCascade.move_relative(5*-360, 100);
-                rightCascade.move_relative(4*360, 100);
-                macroNumber = macroNumber + 1;
-            }
+        // if (macroNumber == 0){
+        //     if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)){
+        //         leftCascade.move_relative(5*-360, 100);
+        //         rightCascade.move_relative(4*360, 100);
+        //         macroNumber = macroNumber + 1;
+        //     }
+        // }
+
+        // else if (macroNumber != 0){
+        //     if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)){
+        //         leftCascade.move_relative(4*-360, 100);
+        //         rightCascade.move_relative(4*360, 100);
+        //         macroNumber = macroNumber + 1;
+        //     }
+        //     else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)){
+        //         leftCascade.move_relative(4*360, 100);
+        //         rightCascade.move_relative(4*-360, 100);
+        //         macroNumber = macroNumber - 1;
+        //     }
+        // }
+
+
+        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)){
+            leftCascade.move_relative(5*-360, 600);
+            rightCascade.move_relative(4*360, 600);
         }
-
-        else if (macroNumber != 0){
-            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)){
-                leftCascade.move_relative(4*-360, 100);
-                rightCascade.move_relative(4*360, 100);
-                macroNumber = macroNumber + 1;
-            }
-            else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)){
-                leftCascade.move_relative(4*360, 100);
-                rightCascade.move_relative(4*-360, 100);
-                macroNumber = macroNumber + 1;
-            }
-        }
-
-
 
         //macro thingy, code first up, and button reset.
 
