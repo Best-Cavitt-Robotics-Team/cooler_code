@@ -25,12 +25,12 @@ pros::Motor rightCascade(18, pros::MotorGearset::blue);
 pros::Motor intake(15, pros::MotorGearset::blue);
 
 //pneumatics
-pros::adi::DigitalOut claw('H', true);
+pros::adi::DigitalOut claw('H', false);
 pros::adi::DigitalOut swivle('G', false);
 
 // tracking wheels
 // vertical tracking wheel encoder. Rotation sensor, port 11, reversed
-pros::Rotation verticalEnc(-9);
+pros::Rotation verticalEnc(1);
 // vertical tracking wheel. 2.75" diameter, 2.5" offset, left of the robot (negative)
 lemlib::TrackingWheel vertical(&verticalEnc, lemlib::Omniwheel::NEW_2, 0.35);
 
@@ -44,19 +44,19 @@ lemlib::Drivetrain drivetrain(&leftMotors,// left motor group
 );
 
 // lateral motion controller
-lemlib::ControllerSettings linearController(3, // proportional gain (kP)
+lemlib::ControllerSettings linearController(8, // proportional gain (kP)
                                             0, // integral gain (kI)
-                                            10, // derivative gain (kD)
+                                            20, // derivative gain (kD)
                                             3, // anti windup
                                             1, // small error range, in inches
                                             100, // small error range timeout, in milliseconds
                                             3, // large error range, in inches
                                             500, // large error range timeout, in milliseconds
-                                            20 // maximum acceleration (slew)
+                                            10 // maximum acceleration (slew)
 );
 
 // angular motion controller
-lemlib::ControllerSettings angularController(1.7, // proportional gain (kP)
+lemlib::ControllerSettings angularController(1, // proportional gain (kP)
                                              0, // integral gain (kI)
                                              10, // derivative gain (kD)
                                              3, // anti windup
@@ -64,7 +64,7 @@ lemlib::ControllerSettings angularController(1.7, // proportional gain (kP)
                                              100, // small error range timeout, in milliseconds
                                              3, // large error range, in degrees
                                              500, // large error range timeout, in milliseconds
-                                             0 // maximum acceleration (slew)
+                                             3 // maximum acceleration (slew)
 );
 
 // sensors for odometry
@@ -120,8 +120,8 @@ void selectorTask(void*) {
 }
 
 void initialize() {
-    leftMotors.set_gearing(pros::MotorGears::green, 2);  // index 0 = front motor
-    rightMotors.set_gearing(pros::MotorGears::green, 2);
+    leftMotors.set_gearing(pros::MotorGears::blue, 2);  // index 0 = front motor
+    rightMotors.set_gearing(pros::MotorGears::blue, 2);
     pros::lcd::initialize(); // initialize brain screen
     chassis.calibrate(); // calibrate sensors
     claw.set_value(false);
@@ -177,22 +177,31 @@ void resetX(){
 //.earlyExitRange
 
 void colorLeft(){
-    leftCascade.set_brake_mode(pros::MotorBrake::hold);
-    rightCascade.set_brake_mode(pros::MotorBrake::hold);
-    chassis.setPose(60,11,-225);
-    chassis.moveToPose(41, 30, -225, 1000, {.forwards=false});
-    leftCascade.move_velocity(-600);
-    rightCascade.move_velocity(600);
-    pros::delay(500);
-    leftCascade.move_velocity(0);
-    rightCascade.move_velocity(0);
-    pros::delay(2000);
-    leftCascade.move_velocity(600);
-    rightCascade.move_velocity(-600);
-    pros::delay(500);
-    leftCascade.move_velocity(0);
-    rightCascade.move_velocity(0);
-    claw.set_value(true);
+   // leftMotors.set_voltage_limit(1000);
+    chassis.setPose(0,0,0);
+    chassis.moveToPose(0,24, 0, 1000);
+    pros::delay(1000);
+    // chassis.turnToHeading(90,500);
+
+
+    // leftCascade.set_brake_mode(pros::MotorBrake::hold);
+    // rightCascade.set_brake_mode(pros::MotorBrake::hold);
+    // chassis.setPose(59.5,10.5,-225);
+    // chassis.moveToPose(41.25, 29.5, -225, 1000, {.forwards=false});
+    // leftCascade.move_velocity(-600);
+    // rightCascade.move_velocity(600);
+    // pros::delay(500);
+    // leftCascade.move_velocity(0);
+    // rightCascade.move_velocity(0);
+    // pros::delay(2000);
+    // leftCascade.move_velocity(600);
+    // rightCascade.move_velocity(-600);
+    // pros::delay(500);
+    // leftCascade.move_velocity(0);
+    // rightCascade.move_velocity(0);
+    // claw.set_value(true);
+
+
     // claw.set_value(false);
     // pros::delay(500);
     // leftCascade.move_velocity(600);
