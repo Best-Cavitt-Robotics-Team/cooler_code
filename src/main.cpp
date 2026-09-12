@@ -11,16 +11,25 @@ pros::MotorGroup leftMotors({13, -12, -11},pros::MotorGearset::blue); // left mo
 pros::MotorGroup rightMotors({-17, 19, 20}, pros::MotorGearset::blue); // right motor group - ports 6, 7, 9 (reversed)
 // leftMotors.set_gearing(pros::MotorGears::green, 2);
 // rightMotors.set_gearing(pros::MotorGears::green, 2);
-pros::Motor leftFront(-11, pros::MotorGearset::green);
+// pros::Motor leftMid(-12, pros::MotorGearset::blue);
+// pros::Motor leftBack(-13, pros::MotorGearset::blue);
+// pros::Motor leftFront(-11, pros::MotorGearset::green);
+// pros::Motor rightMid(19, pros::MotorGearset::blue);
+// pros::Motor rightBack(17, pros::MotorGearset::blue);
 // pros::Motor rightFront(-20, pros::MotorGearset::green);
 
-// Inertial Sensoron port 10
+//pros::MotorGroup leftMotors({leftBack, leftMid, leftFront});
+
+
+// Inertial Sensoron port 5
 pros::Imu imu(5);
 
 pros::Distance dist(8);
 
 pros::Motor leftCascade(10, pros::MotorGearset::blue);
 pros::Motor rightCascade(18, pros::MotorGearset::blue);
+
+pros::MotorGroup liftMotors({-10, 18}, pros::MotorGearset::blue);
 
 pros::Motor intake(15, pros::MotorGearset::blue);
 
@@ -37,22 +46,22 @@ lemlib::TrackingWheel vertical(&verticalEnc, lemlib::Omniwheel::NEW_2, 0.35);
 // drivetrain settings
 lemlib::Drivetrain drivetrain(&leftMotors,// left motor group
                               &rightMotors, // right motor group
-                              15, // 10 inch track width
-                              lemlib::Omniwheel::NEW_325, // using new 4" omnis
-                              450, // drivetrain rpm is 360
+                              11, // 10 inch track width
+                              lemlib::Omniwheel::NEW_275, // using new 4" omnis
+                              600, // drivetrain rpm is 360
                               2 // horizontal drift is 2. If we had traction wheels, it would have been 8
 );
 
 // lateral motion controller
-lemlib::ControllerSettings linearController(8, // proportional gain (kP)
+lemlib::ControllerSettings linearController(5, // proportional gain (kP)
                                             0, // integral gain (kI)
-                                            20, // derivative gain (kD)
-                                            3, // anti windup
-                                            1, // small error range, in inches
-                                            100, // small error range timeout, in milliseconds
-                                            3, // large error range, in inches
-                                            500, // large error range timeout, in milliseconds
-                                            10 // maximum acceleration (slew)
+                                            10, // derivative gain (kD)
+                                            0, // anti windup 3
+                                            0, // small error range, in inches 1
+                                            0, // small error range timeout, in milliseconds 100
+                                            0, // large error range, in inches 3
+                                            0, // large error range timeout, in milliseconds 500
+                                            0 // maximum acceleration (slew) 10
 );
 
 // angular motion controller
@@ -68,7 +77,7 @@ lemlib::ControllerSettings angularController(1, // proportional gain (kP)
 );
 
 // sensors for odometry
-lemlib::OdomSensors sensors(nullptr,//&vertical, // vertical tracking wheel
+lemlib::OdomSensors sensors(&vertical,//&vertical, // vertical tracking wheel
                             nullptr, // vertical tracking wheel 2, set to nullptr as we don't have a second one
                             nullptr, // horizontal tracking wheel
                             nullptr,
@@ -120,11 +129,20 @@ void selectorTask(void*) {
 }
 
 void initialize() {
-    leftMotors.set_gearing(pros::MotorGears::blue, 2);  // index 0 = front motor
-    rightMotors.set_gearing(pros::MotorGears::blue, 2);
+    // leftMotors.set_gearing(pros::MotorGears::blue, 2);  // index 0 = front motor
+    // rightMotors.set_gearing(pros::MotorGears::blue, 2);
+    pros::Motor leftMid(-12, pros::MotorGearset::blue);
+    pros::Motor leftBack(-13, pros::MotorGearset::blue);
+    pros::Motor leftFront(-11, pros::MotorGearset::green);
+    pros::Motor rightMid(19, pros::MotorGearset::blue);
+    pros::Motor rightBack(17, pros::MotorGearset::blue);
+    pros::Motor rightFront(-20, pros::MotorGearset::green);
+    rightMotors.set_voltage_limit(12000*0.85);
+
     pros::lcd::initialize(); // initialize brain screen
     chassis.calibrate(); // calibrate sensors
     claw.set_value(false);
+    
     // the default rate is 50. however, if you need to change the rate, you
     // can do the following.
     // lemlib::bufferedStdout().setRate(...);
@@ -179,27 +197,36 @@ void resetX(){
 void colorLeft(){
    // leftMotors.set_voltage_limit(1000);
     chassis.setPose(0,0,0);
-    chassis.moveToPose(0,24, 0, 1000);
-    pros::delay(1000);
+    chassis.turnToHeading(90,50);
+    // chassis.moveToPoint(0,24, 4000);
+    // pros::delay(1000);
     // chassis.turnToHeading(90,500);
 
 
     // leftCascade.set_brake_mode(pros::MotorBrake::hold);
     // rightCascade.set_brake_mode(pros::MotorBrake::hold);
     // chassis.setPose(59.5,10.5,-225);
-    // chassis.moveToPose(41.25, 29.5, -225, 1000, {.forwards=false});
-    // leftCascade.move_velocity(-600);
-    // rightCascade.move_velocity(600);
-    // pros::delay(500);
-    // leftCascade.move_velocity(0);
-    // rightCascade.move_velocity(0);
-    // pros::delay(2000);
+    // chassis.moveToPose(34, 36, -225, 1000, {.forwards=false}, true);
     // leftCascade.move_velocity(600);
     // rightCascade.move_velocity(-600);
     // pros::delay(500);
     // leftCascade.move_velocity(0);
     // rightCascade.move_velocity(0);
+    // pros::delay(1000);
+    // leftCascade.move_velocity(-600);
+    // rightCascade.move_velocity(600);
+    // pros::delay(500);
+    // leftCascade.move_velocity(0);
+    // rightCascade.move_velocity(0);
     // claw.set_value(true);
+    // swivle.set_value(true);
+    // pros::delay(100);
+
+    // chassis.moveToPoint(65.5,4.5,1000);
+    // chassis.turnToHeading(-180,250);
+    // chassis.moveToPoint(65.5, 4.5, 1000, {.forwards = false});
+    // chassis.turnToHeading(-90, 500);
+    // chassis.setPose(65.5, 4.5, -90);
 
 
     // claw.set_value(false);
@@ -258,6 +285,7 @@ void colorRight(){
 }
 
 void easyAuto(){
+    rightMotors.set_voltage_limit(12000*0.85);
     chassis.setPose(0,6.75,180);
     chassis.moveToPoint(0,24,1000, {.forwards=false});
     chassis.turnToHeading(-90,500);
@@ -310,10 +338,25 @@ float cubicDrive(float input, float scaling = 1.0f) {
 bool clawthing = false;
 bool swivly = true;
 
+// double position1f
+
+const double liftPositions[] = {0, 300, 550, 800}; // stowed, low, mid, high
+int liftIndex = 0;
+const int numPositions = 4;
+
+bool upPressedLast = false;
+bool downPressedLast = false;
+
+// inside opcontrol loop:
+
+
 void opcontrol() {
     // controller
     // loop to continuously update motors
     while (true) {
+
+        rightMotors.set_voltage_limit(450);
+        
 
         float throttle = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
         float turn     = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
@@ -321,13 +364,18 @@ void opcontrol() {
         float leftPower  = cubicDrive(throttle) + cubicDrive(turn);
         float rightPower = cubicDrive(throttle) - cubicDrive(turn);
 
-        if (leftPower  >  127.0f) leftPower  =  127.0f;
-        if (leftPower  < -127.0f) leftPower  = -127.0f;
-        if (rightPower >  127.0f) rightPower =  127.0f;
-        if (rightPower < -127.0f) rightPower = -127.0f;
+        // if (leftPower  >  127.0f) leftPower  =  127.0f;
+        // if (leftPower  < -127.0f) leftPower  = -127.0f;
+        // if (rightPower >  127.0f) rightPower =  127.0f;
+        // if (rightPower < -127.0f) rightPower = -127.0f;
 
-        leftMotors.move(leftPower);
-        rightMotors.move(rightPower);
+        if (leftPower  >  600.0f) leftPower  =  600.0f;
+        if (leftPower  < -600.0f) leftPower  = -600.0f;
+        if (rightPower >  600.0f) rightPower =  600.0f;
+        if (rightPower < -600.0f) rightPower = -600.0f;
+
+        leftMotors.move_velocity(leftPower);
+        rightMotors.move_velocity(rightPower);
 
         // int macroNumber = 0;
 
@@ -352,6 +400,26 @@ void opcontrol() {
         //     }
         // }
 
+
+        bool upPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP);
+        bool downPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
+
+        if (upPressed && !upPressedLast) {          // rising edge = single press, not held
+        if (liftIndex < numPositions - 1) {
+        liftIndex++;
+        liftMotors.move_absolute(liftPositions[liftIndex], 100);
+        }
+        }
+
+        if (downPressed && !downPressedLast) {
+        if (liftIndex > 0) {
+        liftIndex--;
+        liftMotors.move_absolute(liftPositions[liftIndex], 100);
+        }
+        }
+
+upPressedLast = upPressed;
+downPressedLast = downPressed; 
 
         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)){
             leftCascade.move_relative(5*-360, 600);
@@ -384,7 +452,7 @@ void opcontrol() {
             claw.set_value(clawthing);
         }
 
-        else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT)){
+        else if(controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)){
             swivly = !swivly;
             swivle.set_value(swivly);
         }
