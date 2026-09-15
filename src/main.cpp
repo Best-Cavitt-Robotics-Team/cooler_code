@@ -1,5 +1,6 @@
 #include "main.h"
 #include "lemlib/api.hpp" // IWYU pragma: keep
+#include "lemlib/chassis/chassis.hpp"
 #include "pros/abstract_motor.hpp"
 
 // controller
@@ -53,27 +54,27 @@ lemlib::Drivetrain drivetrain(&leftMotors,// left motor group
 );
 
 // lateral motion controller
-lemlib::ControllerSettings linearController(5, // proportional gain (kP)
+lemlib::ControllerSettings linearController(6, // proportional gain (kP)
                                             0, // integral gain (kI)
                                             10, // derivative gain (kD)
-                                            0, // anti windup 3
-                                            0, // small error range, in inches 1
-                                            0, // small error range timeout, in milliseconds 100
-                                            0, // large error range, in inches 3
-                                            0, // large error range timeout, in milliseconds 500
-                                            0 // maximum acceleration (slew) 10
+                                            3, // anti windup
+                                            1, // small error range, in inches
+                                            100, // small error range timeout, in milliseconds
+                                            3, // large error range, in inches
+                                            500, // large error range timeout, in milliseconds
+                                            20 // maximum acceleration (slew) // maximum acceleration (slew) 10
 );
 
 // angular motion controller
-lemlib::ControllerSettings angularController(1, // proportional gain (kP)
+lemlib::ControllerSettings angularController(1.5, // proportional gain (kP)
                                              0, // integral gain (kI)
-                                             10, // derivative gain (kD)
+                                             12, // derivative gain (kD)
                                              3, // anti windup
-                                             1, // small error range, in degrees
+                                             1, // small error range, in degrees 
                                              100, // small error range timeout, in milliseconds
                                              3, // large error range, in degrees
                                              500, // large error range timeout, in milliseconds
-                                             3 // maximum acceleration (slew)
+                                             0 // maximum acceleration (slew)// maximum acceleration (slew)
 );
 
 // sensors for odometry
@@ -196,37 +197,42 @@ void resetX(){
 
 void colorLeft(){
    // leftMotors.set_voltage_limit(1000);
-    chassis.setPose(0,0,0);
-    chassis.turnToHeading(90,50);
+    // chassis.setPose(0,0,0);
+    // chassis.turnToHeading(90,500);
     // chassis.moveToPoint(0,24, 4000);
     // pros::delay(1000);
     // chassis.turnToHeading(90,500);
 
 
-    // leftCascade.set_brake_mode(pros::MotorBrake::hold);
-    // rightCascade.set_brake_mode(pros::MotorBrake::hold);
-    // chassis.setPose(59.5,10.5,-225);
-    // chassis.moveToPose(34, 36, -225, 1000, {.forwards=false}, true);
-    // leftCascade.move_velocity(600);
-    // rightCascade.move_velocity(-600);
-    // pros::delay(500);
-    // leftCascade.move_velocity(0);
-    // rightCascade.move_velocity(0);
-    // pros::delay(1000);
-    // leftCascade.move_velocity(-600);
-    // rightCascade.move_velocity(600);
-    // pros::delay(500);
-    // leftCascade.move_velocity(0);
-    // rightCascade.move_velocity(0);
-    // claw.set_value(true);
-    // swivle.set_value(true);
-    // pros::delay(100);
+    leftCascade.set_brake_mode(pros::MotorBrake::hold);
+    rightCascade.set_brake_mode(pros::MotorBrake::hold);
+    chassis.setPose(59.5,10.5,-225);
+    chassis.moveToPose(52.5, 17.5, -225, 1000, {.forwards=false}, true); //49,21
+    leftCascade.move_velocity(-600);
+    rightCascade.move_velocity(600);
+    pros::delay(500);
+    leftCascade.move_velocity(0);
+    rightCascade.move_velocity(0);
+    // chassis.moveToPose(52.5, 17.5, -225, 1000, {.forwards=true}, true);
+    pros::delay(1000);
+    leftCascade.move_velocity(600);
+    rightCascade.move_velocity(-600);
+    pros::delay(500);
+    leftCascade.move_velocity(0);
+    rightCascade.move_velocity(0);
+    claw.set_value(true);
+    swivle.set_value(true);
+    pros::delay(100);
 
-    // chassis.moveToPoint(65.5,4.5,1000);
-    // chassis.turnToHeading(-180,250);
-    // chassis.moveToPoint(65.5, 4.5, 1000, {.forwards = false});
-    // chassis.turnToHeading(-90, 500);
-    // chassis.setPose(65.5, 4.5, -90);
+    chassis.moveToPose(61.5,9.5,-225,1000);
+    chassis.swingToHeading(-180, lemlib::DriveSide::RIGHT, 250, {.minSpeed = 100});
+    pros::delay(200);
+    chassis.moveToPose(61.5, 52.5, -180, 1000, {.forwards = false});
+    pros::delay(500);
+    chassis.turnToHeading(-270, 2000);
+    chassis.moveToPose(42, 40, -270, 2000, {.forwards = false}, false);
+    // pros::delay(900);
+    claw.set_value(false);
 
 
     // claw.set_value(false);
