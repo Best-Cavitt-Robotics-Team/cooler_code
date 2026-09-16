@@ -207,13 +207,13 @@ void colorLeft(){
     leftCascade.set_brake_mode(pros::MotorBrake::hold);
     rightCascade.set_brake_mode(pros::MotorBrake::hold);
     chassis.setPose(59.5,10.5,-225);
-    chassis.moveToPose(52.5, 17.5, -225, 1000, {.forwards=false}, true); //49,21
+    chassis.moveToPose(51, 19, -225, 1000, {.forwards=false}, true); //49,21
     leftCascade.move_velocity(-600);
     rightCascade.move_velocity(600);
     pros::delay(500);
     leftCascade.move_velocity(0);
     rightCascade.move_velocity(0);
-    // chassis.moveToPose(52.5, 17.5, -225, 1000, {.forwards=true}, true);
+    chassis.moveToPose(52.5, 17.5, -225, 1000, {.forwards=true}, true);
     pros::delay(1000);
     leftCascade.move_velocity(600);
     rightCascade.move_velocity(-600);
@@ -230,7 +230,7 @@ void colorLeft(){
     chassis.moveToPose(61.5, 52.5, -180, 1000, {.forwards = false});
     pros::delay(500);
     chassis.turnToHeading(-270, 2000);
-    chassis.moveToPose(42, 40, -270, 2000, {.forwards = false}, false);
+    chassis.moveToPose(30, 41, -270, 1000, {.forwards = false, .maxSpeed = 80}, false);
     // pros::delay(900);
     claw.set_value(false);
 
@@ -370,18 +370,18 @@ void opcontrol() {
         float leftPower  = cubicDrive(throttle) + cubicDrive(turn);
         float rightPower = cubicDrive(throttle) - cubicDrive(turn);
 
-        // if (leftPower  >  127.0f) leftPower  =  127.0f;
-        // if (leftPower  < -127.0f) leftPower  = -127.0f;
-        // if (rightPower >  127.0f) rightPower =  127.0f;
-        // if (rightPower < -127.0f) rightPower = -127.0f;
+        if (leftPower  >  127.0f) leftPower  =  127.0f;
+        if (leftPower  < -127.0f) leftPower  = -127.0f;
+        if (rightPower >  127.0f) rightPower =  127.0f;
+        if (rightPower < -127.0f) rightPower = -127.0f;
 
-        if (leftPower  >  600.0f) leftPower  =  600.0f;
-        if (leftPower  < -600.0f) leftPower  = -600.0f;
-        if (rightPower >  600.0f) rightPower =  600.0f;
-        if (rightPower < -600.0f) rightPower = -600.0f;
+        // if (leftPower  >  600.0f) leftPower  =  600.0f;
+        // if (leftPower  < -600.0f) leftPower  = -600.0f;
+        // if (rightPower >  600.0f) rightPower =  600.0f;
+        // if (rightPower < -600.0f) rightPower = -600.0f;
 
-        leftMotors.move_velocity(leftPower);
-        rightMotors.move_velocity(rightPower);
+        leftMotors.move_voltage(leftPower);
+        rightMotors.move_voltage(rightPower);
 
         // int macroNumber = 0;
 
