@@ -44,6 +44,15 @@ pros::Rotation verticalEnc(1);
 // vertical tracking wheel. 2.75" diameter, 2.5" offset, left of the robot (negative)
 lemlib::TrackingWheel vertical(&verticalEnc, lemlib::Omniwheel::NEW_2, 0.35);
 
+enum class LiftState { IDLE, TRACKING, REVERSING };
+LiftState liftState = LiftState::IDLE;
+double liftStartDeg = 0;
+double liftTravelDeg = 0;
+const double MAX_LIFT_TRAVEL_DEG = 2520; //was 720
+const double REVERSE_TOLERANCE_DEG = 10.0;
+const int REVERSE_TIMEOUT_MS = 1500;
+int reverseStartTime = 0;
+
 // drivetrain settings
 lemlib::Drivetrain drivetrain(&leftMotors,// left motor group
                               &rightMotors, // right motor group
@@ -210,14 +219,14 @@ void colorLeft(){
     chassis.moveToPose(51, 19, -225, 1000, {.forwards=false}, true); //49,21
     leftCascade.move_velocity(-600);
     rightCascade.move_velocity(600);
-    pros::delay(500);
+    pros::delay(300);
     leftCascade.move_velocity(0);
     rightCascade.move_velocity(0);
     chassis.moveToPose(52.5, 17.5, -225, 1000, {.forwards=true}, true);
     pros::delay(1000);
     leftCascade.move_velocity(600);
     rightCascade.move_velocity(-600);
-    pros::delay(500);
+    pros::delay(300);
     leftCascade.move_velocity(0);
     rightCascade.move_velocity(0);
     claw.set_value(true);
@@ -230,9 +239,26 @@ void colorLeft(){
     chassis.moveToPose(61.5, 52.5, -180, 1000, {.forwards = false});
     pros::delay(500);
     chassis.turnToHeading(-270, 2000);
-    chassis.moveToPose(30, 41, -270, 1000, {.forwards = false, .maxSpeed = 80}, false);
+    chassis.moveToPose(40, 43, -270, 1000, {.forwards = false, .maxSpeed = 80}, false);
     // pros::delay(900);
     claw.set_value(false);
+    pros::delay(200);
+
+    chassis.turnToHeading(0,500);
+    leftCascade.move_velocity(-600);
+    rightCascade.move_velocity(600);
+    pros::delay(900);
+    leftCascade.move_velocity(0);
+    rightCascade.move_velocity(0);
+    pros::delay(500);
+    chassis.moveToPose(40, 30, 0, 1000, {.forwards = false});
+    chassis.moveToPose(41, 15, 0, 1000, {.forwards = false}), false;
+    leftCascade.move_velocity(600);
+    rightCascade.move_velocity(-600);
+    pros::delay(800);
+    leftCascade.move_velocity(0);
+    rightCascade.move_velocity(0);
+    claw.set_value(true);
 
 
     // claw.set_value(false);
@@ -260,15 +286,39 @@ void colorRight(){
     //opposite theta
     leftCascade.set_brake_mode(pros::MotorBrake::hold);
     rightCascade.set_brake_mode(pros::MotorBrake::hold);
-    chassis.setPose(60,11,-225);
-    chassis.moveToPose(41, 30, -225, 1000, {.forwards=false});
+    chassis.setPose(0,11,0);
+    claw.set_value(true);
+    chassis.moveToPose(0, 50, 0, 1000);
+    pros::delay(500);
+    chassis.turnToHeading(90, 500);
+    chassis.moveToPose(-27, 48, 90, 1000, {.forwards = false}, false);
+    pros::delay(500);
+    claw.set_value(false);
     leftCascade.move_velocity(-600);
     rightCascade.move_velocity(600);
-    pros::delay(500);
+    pros::delay(1500);
     leftCascade.move_velocity(0);
     rightCascade.move_velocity(0);
-    pros::delay(2000);
+    // pros::delay(1000);
+    chassis.moveToPose(0, 50, 90, 1000);
+    pros::delay(500);
+    chassis.turnToHeading(-35, 500);
+
+    pros::delay(500);
+    chassis.moveToPose(43, 9, -50, 1000, {.forwards = false, .maxSpeed = 50}, false);
+    pros::delay(500);
+    leftCascade.move_velocity(600);
+    rightCascade.move_velocity(-600);
+    pros::delay(1000);
+    leftCascade.move_velocity(0);
+    rightCascade.move_velocity(0);
     claw.set_value(true);
+    pros::delay(500);
+    chassis.moveToPose(0, 50, -45, 1000);
+    pros::delay(500);
+    chassis.turnToHeading(-180, 500);
+    chassis.moveToPose(0,0,-180, 1000);
+
     // claw.set_value(false);
     // pros::delay(500);
     // leftCascade.move_velocity(600);
@@ -322,8 +372,8 @@ void easyAuto(){
 }
 
 void autonomous() {
-    if (autonSelection == 0) colorLeft();
-    else if (autonSelection == 1) colorRight();
+    if (autonSelection == 0) colorRight();
+    else if (autonSelection == 1) colorLeft();
 
     //pid tuning
     // chassis.setPose(0,0,0);
@@ -357,13 +407,9 @@ bool downPressedLast = false;
 
 
 void opcontrol() {
-    // controller
-    // loop to continuously update motors
+    rightMotors.set_voltage_limit(12000 * 0.85);
+
     while (true) {
-
-        rightMotors.set_voltage_limit(450);
-        
-
         float throttle = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
         float turn     = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
 
@@ -375,99 +421,214 @@ void opcontrol() {
         if (rightPower >  127.0f) rightPower =  127.0f;
         if (rightPower < -127.0f) rightPower = -127.0f;
 
-        // if (leftPower  >  600.0f) leftPower  =  600.0f;
-        // if (leftPower  < -600.0f) leftPower  = -600.0f;
-        // if (rightPower >  600.0f) rightPower =  600.0f;
-        // if (rightPower < -600.0f) rightPower = -600.0f;
+        leftMotors.move(leftPower);
+        rightMotors.move(rightPower);
 
-        leftMotors.move_voltage(leftPower);
-        rightMotors.move_voltage(rightPower);
-
-        // int macroNumber = 0;
-
-        // if (macroNumber == 0){
-        //     if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)){
-        //         leftCascade.move_relative(5*-360, 100);
-        //         rightCascade.move_relative(4*360, 100);
-        //         macroNumber = macroNumber + 1;
-        //     }
-        // }
-
-        // else if (macroNumber != 0){
-        //     if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)){
-        //         leftCascade.move_relative(4*-360, 100);
-        //         rightCascade.move_relative(4*360, 100);
-        //         macroNumber = macroNumber + 1;
-        //     }
-        //     else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)){
-        //         leftCascade.move_relative(4*360, 100);
-        //         rightCascade.move_relative(4*-360, 100);
-        //         macroNumber = macroNumber - 1;
-        //     }
-        // }
-
-
-        bool upPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP);
-        bool downPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
-
-        if (upPressed && !upPressedLast) {          // rising edge = single press, not held
-        if (liftIndex < numPositions - 1) {
-        liftIndex++;
-        liftMotors.move_absolute(liftPositions[liftIndex], 100);
-        }
+        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)) {
+            leftCascade.move_relative(5 * -360, 600);
+            rightCascade.move_relative(4 * 360, 600);
         }
 
-        if (downPressed && !downPressedLast) {
-        if (liftIndex > 0) {
-        liftIndex--;
-        liftMotors.move_absolute(liftPositions[liftIndex], 100);
-        }
-        }
+        // --- lift macro: Y = hold to raise + record, B = tap to reverse ---
+        bool liftHeld    = controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y);
+        bool liftReverse = controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B);
+        bool manualR1    = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1);
+        bool manualL1    = controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1);
 
-upPressedLast = upPressed;
-downPressedLast = downPressed; 
-
-        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)){
-            leftCascade.move_relative(5*-360, 600);
-            rightCascade.move_relative(4*360, 600);
+        if ((manualR1 || manualL1) && liftState != LiftState::IDLE) {
+            leftCascade.move_velocity(0);
+            rightCascade.move_velocity(0);
+            liftState = LiftState::IDLE;
         }
 
-        //macro thingy, code first up, and button reset.
+        switch (liftState) {
+            case LiftState::IDLE:
+                if (liftHeld) {
+                    liftStartDeg = leftCascade.get_position();
+                    liftState = LiftState::TRACKING;
+                } else if (liftReverse && liftTravelDeg != 0) {
+                    leftCascade.move_relative(-liftTravelDeg, 600);
+                    rightCascade.move_relative(liftTravelDeg, 600);
+                    reverseStartTime = pros::millis();
+                    liftState = LiftState::REVERSING;
+                } else if (manualR1) {
+                    leftCascade.move_velocity(-600);
+                    rightCascade.move_velocity(600);
+                } else if (manualL1) {
+                    leftCascade.move_velocity(600);
+                    rightCascade.move_velocity(-600);
+                } else {
+                    leftCascade.move_velocity(0);
+                    rightCascade.move_velocity(0);
+                }
+                break;
 
-        if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
-            leftCascade.move_velocity(-600);
-            rightCascade.move_velocity(600);
+            case LiftState::TRACKING: {
+                double currentTravel = leftCascade.get_position() - liftStartDeg;
+                bool withinLimit = std::fabs(currentTravel) < MAX_LIFT_TRAVEL_DEG;
+
+                if (liftHeld && withinLimit) {
+                    leftCascade.move_velocity(-600);
+                    rightCascade.move_velocity(600);
+                } else {
+                    leftCascade.move_velocity(0);
+                    rightCascade.move_velocity(0);
+                }
+
+                if (!liftHeld) {
+                    liftTravelDeg = currentTravel;
+                    if (liftTravelDeg >  MAX_LIFT_TRAVEL_DEG) liftTravelDeg =  MAX_LIFT_TRAVEL_DEG;
+                    if (liftTravelDeg < -MAX_LIFT_TRAVEL_DEG) liftTravelDeg = -MAX_LIFT_TRAVEL_DEG;
+                    liftState = LiftState::IDLE;
+                }
+                break;
+            }
+
+            case LiftState::REVERSING:
+                if (std::fabs(leftCascade.get_position() - liftStartDeg) < REVERSE_TOLERANCE_DEG ||
+                    pros::millis() - reverseStartTime > REVERSE_TIMEOUT_MS) {
+                    leftCascade.move_velocity(0);
+                    rightCascade.move_velocity(0);
+                    liftState = LiftState::IDLE;
+                }
+                break;
         }
 
-        else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)){
+        // R2/L2 intake — unrelated to lift macro, runs every loop
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
             intake.move_velocity(-600);
-        }
-
-        else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)){
+        } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
             intake.move_velocity(600);
+        } else if (liftState == LiftState::IDLE && !manualR1 && !manualL1) {
+            intake.move_velocity(0);
         }
 
-
-        else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)){
-            leftCascade.move_velocity(600);
-            rightCascade.move_velocity(-600);
-        }
-
-        else if(controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)){
+        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
             clawthing = !clawthing;
             claw.set_value(clawthing);
         }
 
-        else if(controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)){
+        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) {
             swivly = !swivly;
             swivle.set_value(swivly);
         }
 
-        else {
-            leftCascade.move_velocity(0);
-            rightCascade.move_velocity(0);
-            intake.move_velocity(0);
-        }
-
+        pros::delay(10);
     }
 }
+
+// void opcontrol() {
+//     // controller
+//     // loop to continuously update motors
+//     while (true) {
+
+//         rightMotors.set_voltage_limit(450);
+        
+
+//         float throttle = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+//         float turn     = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+
+//         float leftPower  = cubicDrive(throttle) + cubicDrive(turn);
+//         float rightPower = cubicDrive(throttle) - cubicDrive(turn);
+
+//         if (leftPower  >  127.0f) leftPower  =  127.0f;
+//         if (leftPower  < -127.0f) leftPower  = -127.0f;
+//         if (rightPower >  127.0f) rightPower =  127.0f;
+//         if (rightPower < -127.0f) rightPower = -127.0f;
+
+//         // if (leftPower  >  600.0f) leftPower  =  600.0f;
+//         // if (leftPower  < -600.0f) leftPower  = -600.0f;
+//         // if (rightPower >  600.0f) rightPower =  600.0f;
+//         // if (rightPower < -600.0f) rightPower = -600.0f;
+
+//         leftMotors.move_voltage(leftPower);
+//         rightMotors.move_voltage(rightPower);
+
+//         // int macroNumber = 0;
+
+//         // if (macroNumber == 0){
+//         //     if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)){
+//         //         leftCascade.move_relative(5*-360, 100);
+//         //         rightCascade.move_relative(4*360, 100);
+//         //         macroNumber = macroNumber + 1;
+//         //     }
+//         // }
+
+//         // else if (macroNumber != 0){
+//         //     if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)){
+//         //         leftCascade.move_relative(4*-360, 100);
+//         //         rightCascade.move_relative(4*360, 100);
+//         //         macroNumber = macroNumber + 1;
+//         //     }
+//         //     else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)){
+//         //         leftCascade.move_relative(4*360, 100);
+//         //         rightCascade.move_relative(4*-360, 100);
+//         //         macroNumber = macroNumber - 1;
+//         //     }
+//         // }
+
+
+//         bool upPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP);
+//         bool downPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
+
+//         if (upPressed && !upPressedLast) {          // rising edge = single press, not held
+//         if (liftIndex < numPositions - 1) {
+//         liftIndex++;
+//         liftMotors.move_absolute(liftPositions[liftIndex], 100);
+//         }
+//         }
+
+//         if (downPressed && !downPressedLast) {
+//         if (liftIndex > 0) {
+//         liftIndex--;
+//         liftMotors.move_absolute(liftPositions[liftIndex], 100);
+//         }
+//         }
+
+// upPressedLast = upPressed;
+// downPressedLast = downPressed; 
+
+//         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)){
+//             leftCascade.move_relative(5*-360, 600);
+//             rightCascade.move_relative(4*360, 600);
+//         }
+
+//         //macro thingy, code first up, and button reset.
+
+//         if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
+//             leftCascade.move_velocity(-600);
+//             rightCascade.move_velocity(600);
+//         }
+
+//         else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)){
+//             intake.move_velocity(-600);
+//         }
+
+//         else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)){
+//             intake.move_velocity(600);
+//         }
+
+
+//         else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)){
+//             leftCascade.move_velocity(600);
+//             rightCascade.move_velocity(-600);
+//         }
+
+//         else if(controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)){
+//             clawthing = !clawthing;
+//             claw.set_value(clawthing);
+//         }
+
+//         else if(controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)){
+//             swivly = !swivly;
+//             swivle.set_value(swivly);
+//         }
+
+//         else {
+//             leftCascade.move_velocity(0);
+//             rightCascade.move_velocity(0);
+//             intake.move_velocity(0);
+//         }
+
+//     }
+// }
