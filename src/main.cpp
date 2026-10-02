@@ -63,9 +63,9 @@ lemlib::Drivetrain drivetrain(&leftMotors,// left motor group
 );
 
 // lateral motion controller
-lemlib::ControllerSettings linearController(6, // proportional gain (kP)
+lemlib::ControllerSettings linearController(8, // proportional gain (kP)
                                             0, // integral gain (kI)
-                                            10, // derivative gain (kD)
+                                            15, // derivative gain (kD)
                                             3, // anti windup
                                             1, // small error range, in inches
                                             100, // small error range timeout, in milliseconds
@@ -87,7 +87,7 @@ lemlib::ControllerSettings angularController(1.5, // proportional gain (kP)
 );
 
 // sensors for odometry
-lemlib::OdomSensors sensors(&vertical,//&vertical, // vertical tracking wheel
+lemlib::OdomSensors sensors(nullptr,//&vertical, // vertical tracking wheel
                             nullptr, // vertical tracking wheel 2, set to nullptr as we don't have a second one
                             nullptr, // horizontal tracking wheel
                             nullptr,
@@ -169,10 +169,20 @@ void initialize() {
             pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
             pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading4
             pros::lcd::print(3, "Distance: %d", dist.get());
-            // log position telemetry
-            lemlib::telemetrySink()->info("Chassis pose: {}", chassis.getPose());
-            // delay to save resources
-            pros::delay(50);
+
+//         while (true) {
+//             pros::lcd::print(5, "Chassis: %.2f",
+//             chassis.getPose());
+
+//             pros::lcd::print(6, "IMU: %.2f",
+//             imu.get_rotation());
+
+//             pros::delay(20);
+// }
+//             // log position telemetry
+//             lemlib::telemetrySink()->info("Chassis pose: {}", chassis.getPose());
+//             // delay to save resources
+//             pros::delay(50);
         }
     });
 }
@@ -205,60 +215,124 @@ void resetX(){
 //.earlyExitRange
 
 void colorLeft(){
-   // leftMotors.set_voltage_limit(1000);
-    // chassis.setPose(0,0,0);
-    // chassis.turnToHeading(90,500);
-    // chassis.moveToPoint(0,24, 4000);
-    // pros::delay(1000);
-    // chassis.turnToHeading(90,500);
+    rightMotors.set_voltage_limit(12000 * 0.31);
 
+    chassis.setPose(0,0,225);
 
-    leftCascade.set_brake_mode(pros::MotorBrake::hold);
-    rightCascade.set_brake_mode(pros::MotorBrake::hold);
-    chassis.setPose(59.5,10.5,-225);
-    chassis.moveToPose(51, 19, -225, 1000, {.forwards=false}, true); //49,21
     leftCascade.move_velocity(-600);
     rightCascade.move_velocity(600);
-    pros::delay(300);
+    pros::delay(500);
     leftCascade.move_velocity(0);
     rightCascade.move_velocity(0);
-    chassis.moveToPose(52.5, 17.5, -225, 1000, {.forwards=true}, true);
-    pros::delay(1000);
-    leftCascade.move_velocity(600);
-    rightCascade.move_velocity(-600);
-    pros::delay(300);
-    leftCascade.move_velocity(0);
-    rightCascade.move_velocity(0);
-    claw.set_value(true);
-    swivle.set_value(true);
+
+    chassis.moveToPose(10,10,225,1000, {.forwards=false});
+    chassis.setPose(0,0,225);
     pros::delay(100);
+    chassis.moveToPose(3,3,225,300);
 
-    chassis.moveToPose(61.5,9.5,-225,1000);
-    chassis.swingToHeading(-180, lemlib::DriveSide::RIGHT, 250, {.minSpeed = 100});
-    pros::delay(200);
-    chassis.moveToPose(61.5, 52.5, -180, 1000, {.forwards = false});
     pros::delay(500);
-    chassis.turnToHeading(-270, 2000);
-    chassis.moveToPose(40, 43, -270, 1000, {.forwards = false, .maxSpeed = 80}, false);
-    // pros::delay(900);
-    claw.set_value(false);
-    pros::delay(200);
 
-    chassis.turnToHeading(0,500);
-    leftCascade.move_velocity(-600);
-    rightCascade.move_velocity(600);
-    pros::delay(900);
-    leftCascade.move_velocity(0);
-    rightCascade.move_velocity(0);
-    pros::delay(500);
-    chassis.moveToPose(40, 30, 0, 1000, {.forwards = false});
-    chassis.moveToPose(41, 15, 0, 1000, {.forwards = false}), false;
     leftCascade.move_velocity(600);
     rightCascade.move_velocity(-600);
-    pros::delay(800);
+    pros::delay(200);
     leftCascade.move_velocity(0);
     rightCascade.move_velocity(0);
+
     claw.set_value(true);
+
+    
+    
+
+
+
+
+//    // leftMotors.set_voltage_limit(1000);
+//     // chassis.setPose(0,0,0);
+//     // chassis.turnToHeading(90,500);
+//     // chassis.moveToPoint(0,24, 4000);
+//     // pros::delay(1000);
+//     // chassis.turnToHeading(90,500);
+
+
+//     leftCascade.set_brake_mode(pros::MotorBrake::hold);
+//     rightCascade.set_brake_mode(pros::MotorBrake::hold);
+//     chassis.setPose(59.5,10.5,-225);
+//     chassis.moveToPose(51, 19, -225, 1000, {.forwards=false}, true); //49,21
+//     leftCascade.move_velocity(-600);
+//     rightCascade.move_velocity(600);
+//     pros::delay(300);
+//     leftCascade.move_velocity(0);
+//     rightCascade.move_velocity(0);
+//     chassis.moveToPose(52.5, 17.5, -225, 1000, {.forwards=true}, true);
+//     pros::delay(1000);
+//     leftCascade.move_velocity(600);
+//     rightCascade.move_velocity(-600);
+//     pros::delay(300);
+//     leftCascade.move_velocity(0);
+//     rightCascade.move_velocity(0);
+//     claw.set_value(true);
+//     swivle.set_value(true);
+//     pros::delay(100);
+
+//     chassis.moveToPose(61.5,9.5,-225,1000);
+//     chassis.swingToHeading(-180, lemlib::DriveSide::RIGHT, 250, {.minSpeed = 100});
+//     pros::delay(200);
+//     chassis.moveToPose(61.5, 52.5, -180, 1000, {.forwards = false});
+//     pros::delay(500);
+//     chassis.turnToHeading(-270, 2000);
+//     chassis.moveToPose(40, 43, -270, 1000, {.forwards = false, .maxSpeed = 80}, false);
+//     // pros::delay(900);
+//     claw.set_value(false);
+//     pros::delay(200);
+
+//     chassis.turnToHeading(0,500);
+//     leftCascade.move_velocity(-600);
+//     rightCascade.move_velocity(600);
+//     pros::delay(900);
+//     leftCascade.move_velocity(0);
+//     rightCascade.move_velocity(0);
+//     pros::delay(500);
+//     chassis.moveToPose(40, 30, 0, 1000, {.forwards = false});
+//     chassis.moveToPose(41, 15, 0, 1000, {.forwards = false}, false);
+//     leftCascade.move_velocity(600);
+//     rightCascade.move_velocity(-600);
+//     pros::delay(800);
+//     leftCascade.move_velocity(0);
+//     rightCascade.move_velocity(0);
+//     claw.set_value(true);
+
+//MUY IMPORTNTE
+
+    // rightMotors.set_voltage_limit(12000 * 0.31); //25
+
+    // chassis.setPose(0,0,0);
+    
+    // chassis.moveToPose(0,24,0, 2000);
+
+    // leftMotors.move(50);
+    // rightMotors.move(50);
+
+    // pros::delay(2000);
+
+    // leftMotors.move(0);
+    // rightMotors.move(0);
+
+    // chassis.turnToHeading(90,1000);
+
+    // leftCascade.set_brake_mode(pros::MotorBrake::hold);
+    // rightCascade.set_brake_mode(pros::MotorBrake::hold);
+    // chassis.setPose(0,0,0);
+    // chassis.moveToPose(0,-10,0,1000, {.forwards= false});
+    // pros::delay(100);
+    // chassis.moveToPose(0,20,0,1000);
+    // pros::delay(500);
+    // chassis.setPose(0,0,0);
+    // chassis.moveToPose(0,-10,0,1000, {.forwards= false});
+    // pros::delay(100);
+    // chassis.moveToPose(0,20,0,1000);
+    // pros::delay(100);
+    // chassis.moveToPose(0,-20,0,1000, {.forwards=false});
+
 
 
     // claw.set_value(false);
@@ -283,7 +357,6 @@ void colorLeft(){
 }
 
 void colorRight(){
-    //opposite theta
     leftCascade.set_brake_mode(pros::MotorBrake::hold);
     rightCascade.set_brake_mode(pros::MotorBrake::hold);
     chassis.setPose(0,11,0);
@@ -291,12 +364,12 @@ void colorRight(){
     chassis.moveToPose(0, 50, 0, 1000);
     pros::delay(500);
     chassis.turnToHeading(90, 500);
-    chassis.moveToPose(-27, 48, 90, 1000, {.forwards = false}, false);
+    chassis.moveToPose(-26, 48, 90, 1000, {.forwards = false}, false);//-27
     pros::delay(500);
     claw.set_value(false);
     leftCascade.move_velocity(-600);
     rightCascade.move_velocity(600);
-    pros::delay(1500);
+    pros::delay(1000);
     leftCascade.move_velocity(0);
     rightCascade.move_velocity(0);
     // pros::delay(1000);
@@ -309,7 +382,7 @@ void colorRight(){
     pros::delay(500);
     leftCascade.move_velocity(600);
     rightCascade.move_velocity(-600);
-    pros::delay(1000);
+    pros::delay(750);
     leftCascade.move_velocity(0);
     rightCascade.move_velocity(0);
     claw.set_value(true);
@@ -317,7 +390,21 @@ void colorRight(){
     chassis.moveToPose(0, 50, -45, 1000);
     pros::delay(500);
     chassis.turnToHeading(-180, 500);
-    chassis.moveToPose(0,0,-180, 1000);
+    chassis.moveToPose(0,-5,-180, 2000, {}, false);
+    pros::delay(200);
+
+    chassis.setPose(0,0,0);
+    chassis.moveToPose(0,-10,0,1000,{.forwards=false});
+    pros::delay(200);
+    chassis.moveToPose(0,5,0,1000);
+    pros::delay(300);
+    chassis.setPose(0,0,0);
+    chassis.moveToPose(0,-10,0,2000,{.forwards=false});
+    chassis.moveToPose(0,30,0,3000, {.minSpeed=90});
+    chassis.setPose(0,0,0);
+    chassis.moveToPose(0,-10,0,2000,{.forwards=false});
+    chassis.turnToHeading(-90,500);
+    
 
     // claw.set_value(false);
     // pros::delay(500);
@@ -372,8 +459,8 @@ void easyAuto(){
 }
 
 void autonomous() {
-    if (autonSelection == 0) colorRight();
-    else if (autonSelection == 1) colorLeft();
+    if (autonSelection == 0) colorLeft();
+    // else if (autonSelection == 1) colorLeft();
 
     //pid tuning
     // chassis.setPose(0,0,0);
